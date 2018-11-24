@@ -3,7 +3,7 @@
 import sys, pygame
 from random import randint
 from pygame import gfxdraw
-from extras import *
+import extras
 
 
 class tileObj(object):
@@ -49,7 +49,7 @@ class tileObj(object):
    
     def pickColor(self):
         v = self.value
-        print(type(v), v)
+        
         if v == 2: c = (230,230,230)
         elif v == 4: c = (203, 203, 203)
         elif v == 8: c = (255,204,102)
@@ -62,7 +62,7 @@ class tileObj(object):
         elif v == 1024: c = (179, 179, 0)
         else: 
             c = (153, 153, 0)
-            print('bbbbb')
+            
         
         return c
 
@@ -79,23 +79,21 @@ class tileObj(object):
         screen.blit(tile,pos)
 
 
-def spawnTile(tiles=[]):
-    x=randint(1,2)
-    x=x*2
+def spawnTile(grid):
+    num=randint(1,2)
+    num=num*2
 
     while True:
-        x1 = randint(0,3)
-        x2 = randint(0,3)
-        check = True
-        for tile in tiles:
-            if tile.pos == (x1,x2):
-                check == False
-        if check: break
+        x = randint(0,3)
+        y = randint(0,3)
+        if grid[y][x] == 0:
+            grid[y][x] == 1
+            break
             
 
-    x = tileObj(x,(0,125,125),(x1,x2))
+    x = tileObj(num,(0,125,125),(x,y))
 
-    return x
+    return x, grid
 
 def sortTiles(tiles,move):
     if move[0] != 0:
@@ -126,7 +124,7 @@ size = (900,800)
 
 pygame.init()
 screen = pygame.display.set_mode(size)
-init(screen, size)
+extras.init(screen, size)
 screen.fill((255,255,255))
 pygame.display.flip()
 
@@ -134,12 +132,34 @@ mouse = pygame.Rect(0, 0, 2, 2)
 
 border = pygame.Rect(150,150,600,600)
 
-x=spawnTile()
+grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+x, grid = spawnTile(grid)
 tiles = [x]
-y=spawnTile(tiles)
+y, grid = spawnTile(grid)
 
 tiles = [x,y]
 movement = (0,0)
+
+
+def onKeyPress(velocity, grid, tiles):
+    ##Move
+    
+    t = sortTiles(tiles,velocity)
+    newTiles = []
+    for tile in t:
+        newPos = (tile.pos[0]+velocity[0], tile.pos[1]+velocity[1])
+        if newPos[0] <= 3 and newPos[0] >= 0 and newPos[1] >= 0 and newPos[1] <= 3:
+            grid[tile.pos[1]][tile.pos[0]] = 0
+            tiles[tiles.index[tile]].pos = newPos
+            grid[newPos[1]][newPos[0]] = 1
+            newTiles.append(tile)
+    ##--##
+
+    return grid, tiles
+
+
+
 while True:
     xm, ym = pygame.mouse.get_pos()
     mouse.center = (xm,ym)
@@ -176,59 +196,23 @@ while True:
         tile.draw()
     ##--##
         
-    ##--##
 
     ##keyCheck
 
-    keys = getKeys()
+    keys = extras.getKeys()
     if 'right' in keys or 'd' in keys: movement = (1,0)
     elif 'left' in keys or 'a' in keys: movement = (-1,0)
     elif 'up' in keys or 'w' in keys: movement = (0,-1)
     elif 'down' in keys or 's' in keys: movement = (0,1)
 
+    if len(keys) > 0:
+        grid, tiles = onKeyPress(movement, grid, tiles)
+        print(grid)
     ##--##
 
-    ##MoveTiles:
-    if movement != (0,0) and moveSpam:
-        moveSpam = False
-        tiles = sortTiles(tiles, (movement[0]*5, movement[1]*5))
-    
-        didMove = True
-        movedOnce = False
-        while didMove:
-            print(len(tiles))
-            for tile in tiles:
-                pos = tile.pos
-                pos = (pos[0]+movement[0], pos[1]+movement[1])
-                check = False
-                if pos[0] >= 0 and pos[0] <= 3 and pos[1] >= 0 and pos[1] <= 3:
-                    check = True
-                    for t2 in tiles:
-                        if pos == t2.pos and tile != t2:
-                              check = False
-                if check: 
-                    tile.pos = pos
-                    didMove = True
-                    movedOnce = True
-                else: didMove = False
-
-    
-    
-    ##--##
-
-    ##SpawnNew
-    if movement != (0,0) and spamMeasure and movedOnce:
-        spamMeasure = False
-        t = spawnTile(tiles)
-        tiles.append(t)
-    if movement == (0,0):
-        spamMeasure = True
-        moveSpam = True
-
-    movement = (0,0)
-    ##--##
 
     pygame.display.flip()
     screen.fill((255,255,255))
 
 
+    
