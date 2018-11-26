@@ -82,18 +82,20 @@ class tileObj(object):
 def spawnTile(grid):
     num=randint(1,2)
     num=num*2
+    grd = grid
+
 
     while True:
         x = randint(0,3)
         y = randint(0,3)
-        if grid[y][x] == 0:
-            grid[y][x] == 1
+        if grd[y][x] == 0:
+            grd[y][x] = num
             break
             
 
     x = tileObj(num,(0,125,125),(x,y))
-
-    return x, grid
+    return x, grd
+    
 
 def sortTiles(tiles,move):
     if move[0] != 0:
@@ -119,6 +121,99 @@ def sortTiles(tiles,move):
             tiles.remove(close)
         return t
 
+def reset():
+    global tiles
+    global grid
+    global enableInput
+    global movement
+    global keySpam
+    global mode
+
+
+    tiles = []
+    grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+    x, grid = spawnTile(grid)
+    y, grid = spawnTile(grid)
+
+    tiles = [x,y]
+    movement = (0,0)
+
+    enableInput = True
+    keySpam = False
+    mode = 'game'
+
+
+def onKeyPress(velocity, grid, tiles):
+    ##Move
+    
+    t = sortTiles(tiles,velocity)
+    mergedTiles = []
+    loop = True
+    movedOnce = False
+    while loop:
+        didMove = False
+        for tile in t:
+            newPos = (tile.pos[0]+velocity[0], tile.pos[1]+velocity[1])
+            if newPos[0] <= 3 and newPos[0] >= 0 and newPos[1] >= 0 and newPos[1] <= 3:
+                check = True, None
+                for k in t:
+                    if newPos == k.pos:
+                        check = False, k
+            
+                if check[0]:
+                    grid[tile.pos[1]][tile.pos[0]] = 0
+                    tile.pos = newPos
+                    grid[newPos[1]][newPos[0]] = tile.value
+                    didMove = True
+                    movedOnce = True
+                elif tile.value == check[1].value and (tile not in mergedTiles) and (check[1] not in mergedTiles) :
+                    x,y = tile.pos
+                    grid[y][x] = 0
+
+                    tile.value = tile.value*2
+                    tile.pos = check[1].pos
+
+                    x,y = tile.pos
+                    grid[y][x] = tile.value
+
+                    t.remove(check[1])
+                    mergedTiles.append(tile)
+
+                    didMove = True
+                    movedOnce = True
+        if didMove == False: loop = False
+                
+    ##--##
+
+    
+
+
+
+    if movedOnce:
+        newTile,grid = spawnTile(grid)
+        t.append(newTile)
+    
+
+    if movedOnce and len(t) == 16:
+        x,y = tile.pos
+        val = tile.value
+
+        arePossibleMoves = False
+        for x1 in range(0,2):
+            for y1 in range(0,2):
+                y1 -= 1
+                x1 -= 1
+                nextVal = grid[y+y1][x+x1]
+                if nextVal == val: arePossibleMoves = True
+
+
+        if arePossibleMoves == False:
+            global mode
+            mode = 'lose'
+        
+
+    return grid, t
 
 size = (900,800)
 
@@ -141,22 +236,14 @@ y, grid = spawnTile(grid)
 tiles = [x,y]
 movement = (0,0)
 
+enableInput = True
+keySpam = False
+mode = 'game'
 
-def onKeyPress(velocity, grid, tiles):
-    ##Move
-    
-    t = sortTiles(tiles,velocity)
-    newTiles = []
-    for tile in t:
-        newPos = (tile.pos[0]+velocity[0], tile.pos[1]+velocity[1])
-        if newPos[0] <= 3 and newPos[0] >= 0 and newPos[1] >= 0 and newPos[1] <= 3:
-            grid[tile.pos[1]][tile.pos[0]] = 0
-            tiles[tiles.index[tile]].pos = newPos
-            grid[newPos[1]][newPos[0]] = 1
-            newTiles.append(tile)
-    ##--##
 
-    return grid, tiles
+
+
+print(grid)
 
 
 
@@ -168,48 +255,55 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
 
-
-    ##GRID
-    pygame.draw.rect(screen,(125,125,125),border)
-    border_width = 15
-    pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
-    
-    for i in range(3):
-        start = border.left + border_width/2
-        step = border.width/4 - border_width/4
-        start = start + (step*(1+i))
-        start = int(start)
-        end = (start,border.bottom-5)
-        start = (start,border.top+5)
+    if mode == 'game':
+        ##GRID
+        pygame.draw.rect(screen,(125,125,125),border)
+        border_width = 15
+        pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
         
-        pygame.draw.line(screen,(125,125,125),start,end,border_width)
+        for i in range(3):
+            start = border.left + border_width/2
+            step = border.width/4 - border_width/4
+            start = start + (step*(1+i))
+            start = int(start)
+            end = (start,border.bottom-5)
+            start = (start,border.top+5)
+            
+            pygame.draw.line(screen,(125,125,125),start,end,border_width)
 
-        s,d = start
-        x,c = end
-        start = (d,s)
-        end = (c,x) 
-        pygame.draw.line(screen,(125,125,125),start,end,border_width)
-        
+            s,d = start
+            x,c = end
+            start = (d,s)
+            end = (c,x) 
+            pygame.draw.line(screen,(125,125,125),start,end,border_width)
+            
 
-    ##DrawTiles
-    for tile in tiles:
-        tile.draw()
-    ##--##
-        
+        ##DrawTiles
+        for tile in tiles:
+            tile.draw()
+        ##--##
+            
 
-    ##keyCheck
+        ##keyCheck
 
-    keys = extras.getKeys()
-    if 'right' in keys or 'd' in keys: movement = (1,0)
-    elif 'left' in keys or 'a' in keys: movement = (-1,0)
-    elif 'up' in keys or 'w' in keys: movement = (0,-1)
-    elif 'down' in keys or 's' in keys: movement = (0,1)
+        keys = extras.getKeys()
+        if 'right' in keys or 'd' in keys: movement = (1,0)
+        elif 'left' in keys or 'a' in keys: movement = (-1,0)
+        elif 'up' in keys or 'w' in keys: movement = (0,-1)
+        elif 'down' in keys or 's' in keys: movement = (0,1)
 
-    if len(keys) > 0:
-        grid, tiles = onKeyPress(movement, grid, tiles)
-        print(grid)
-    ##--##
+        if len(keys) > 0 and keySpam and enableInput:
+            keySpam = False
+            grid, tiles = onKeyPress(movement, grid, tiles)
+            print(grid, movement, len(tiles))
+        elif len(keys) == 0:
+            keySpam = True
+        ##--##
 
+
+    if mode == 'lose':
+        enableInput = False
+        mode = 'game'
 
     pygame.display.flip()
     screen.fill((255,255,255))
