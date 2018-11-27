@@ -1,8 +1,9 @@
-# ethan
+"Main Code for 2048 game"
 
-import sys, pygame
+import sys
 from random import randint
-from pygame import gfxdraw
+import pygame
+#from pygame import gfxdraw
 import extras
 
 
@@ -14,45 +15,56 @@ class tileObj(object):
 
     pos: (0-3,0-3) TL=(0,0)
     """
-    def __init__(self,num,color,pos):
+    def __init__(self, num, color, pos):
         self.value = num
         self.color = color
         self.pos = pos
         self.check()
 
     def check(self):
-        if type(self.value) != int: raise TypeError('self.value must be an intager')
+        "Checks to make sure all class requirements are met"
 
-        if type(self.color) != tuple: raise TypeError('self.color must be a tuple')
-        elif len(self.color) != 3: raise TypeError('self.color must have three values')
+        if type(self.value) != int:
+            raise TypeError('self.value must be an intager')
+        if type(self.color) != tuple:
+            raise TypeError('self.color must be a tuple')
+        elif len(self.color) != 3:
+            raise TypeError('self.color must have three values')
         else:
             for color in self.color:
-                if color > 255 or color < 0:raise ValueError('each value of self.color must be in the range of 0-255')
-        if type(self.pos) != tuple: raise TypeError('self.pos must be a tuple')
-        elif len(self.pos) != 2: raise TypeError('self.pos must have two values')
+                if color > 255 or color < 0:
+                    raise ValueError('each value of self.color must be in the range of 0-255')
+        if type(self.pos) != tuple:
+            raise TypeError('self.pos must be a tuple')
+        elif len(self.pos) != 2:
+            raise TypeError('self.pos must have two values')
         else:
             for point in self.pos:
-                if point > 3 or point < 0:raise ValueError('each value of self.pos must be in the range of 0-3')
-    
+                if point > 3 or point < 0:
+                    raise ValueError('each value of self.pos must be in the range of 0-3')
+
     def genTile(self):
-        tile = pygame.Surface((132,132))
+        "The Code to generate a tile"
+        tile = pygame.Surface((132, 132))
         return tile
-    def addNum(self,tile):
+    def addNum(self, tile):
+        "The code to add the number to the blank tile"
         font = pygame.font.SysFont('', 145)
         if self.value != 2 and self.value != 4:
-            text = font.render(str(self.value), True, (255,255,255))
-        else: text = font.render(str(self.value), True, (0,0,0))
+            text = font.render(str(self.value), True, (255, 255, 255))
+        else: text = font.render(str(self.value), True, (0, 0, 0))
         rect = text.get_rect()
         pos = (tile.get_width()/2 - (rect.width/2), tile.get_height()/2 - (rect.height/2))
-        tile.blit(text,pos)
+        tile.blit(text, pos)
         return tile
-   
+
     def pickColor(self):
+        "Defines preset colors for values"
         v = self.value
-        
-        if v == 2: c = (230,230,230)
+
+        if v == 2: c = (230, 230, 230)
         elif v == 4: c = (203, 203, 203)
-        elif v == 8: c = (255,204,102)
+        elif v == 8: c = (255, 204, 102)
         elif v == 16: c = (255, 170, 0)
         elif v == 32: c = (255, 112, 77)
         elif v == 64: c = (179, 36, 0)
@@ -60,47 +72,48 @@ class tileObj(object):
         elif v == 256: c = (255, 255, 51)
         elif v == 512: c = (230, 230, 0)
         elif v == 1024: c = (179, 179, 0)
-        else: 
+        else:
             c = (153, 153, 0)
-            
-        
+
         return c
 
     def draw(self):
+        "Draws the tile onto the screen surface at a specific coordinate point"
         tile = self.genTile()
         tile.fill(self.pickColor())
-        tile  = self.addNum(tile)
+        tile = self.addNum(tile)
 
         offset = 165
         x = 146.25*self.pos[0]
         y = 146.25*self.pos[1]
-        pos = (x+offset,y+offset)
+        pos = (x+offset, y+offset)
 
-        screen.blit(tile,pos)
+        screen.blit(tile, pos)
 
 
 def spawnTile(grid):
-    num=randint(1,2)
-    num=num*2
+    "Randomly spawns tiles on the board"
+    num = randint(1, 2)
+    num = num*2
     grd = grid
 
 
     while True:
-        x = randint(0,3)
-        y = randint(0,3)
+        x = randint(0, 3)
+        y = randint(0, 3)
         if grd[y][x] == 0:
             grd[y][x] = num
             break
-            
 
-    x = tileObj(num,(0,125,125),(x,y))
+    x = tileObj(num, (0, 125, 125), (x, y))
     return x, grd
-    
 
-def sortTiles(tiles,move):
+
+def sortTiles(tiles, move):
+    "Sorts tiles in a list based on keyPress"
     if move[0] != 0:
-        t=[]
-        while len(tiles)>0:
+        t = []
+        while tiles:
             close = tiles[0]
             for tile in tiles:
                 p = tile.pos[0]
@@ -111,7 +124,7 @@ def sortTiles(tiles,move):
         return t
     if move[1] != 0:
         t=[]
-        while len(tiles)>0:
+        while tiles:
             close = tiles[0]
             for tile in tiles:
                 p = tile.pos[1]
@@ -122,13 +135,15 @@ def sortTiles(tiles,move):
         return t
 
 def reset():
+    "Resets game variables for purpous of the retry button"
     global tiles
     global grid
     global enableInput
     global movement
     global keySpam
     global mode
-
+    global fadeIn
+    global score
 
     tiles = []
     grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
@@ -142,11 +157,14 @@ def reset():
     enableInput = True
     keySpam = False
     mode = 'game'
+    fadeIn = [True,0]
+    score = [0,0]
 
 
 def onKeyPress(velocity, grid, tiles):
+    "Logic for when a key is pressed"
     ##Move
-    
+
     t = sortTiles(tiles,velocity)
     mergedTiles = []
     loop = True
@@ -160,14 +178,14 @@ def onKeyPress(velocity, grid, tiles):
                 for k in t:
                     if newPos == k.pos:
                         check = False, k
-            
+
                 if check[0]:
                     grid[tile.pos[1]][tile.pos[0]] = 0
                     tile.pos = newPos
                     grid[newPos[1]][newPos[0]] = tile.value
                     didMove = True
                     movedOnce = True
-                elif tile.value == check[1].value and (tile not in mergedTiles) and (check[1] not in mergedTiles) :
+                elif tile.value == check[1].value and (tile not in mergedTiles) and (check[1] not in mergedTiles):
                     x,y = tile.pos
                     grid[y][x] = 0
 
@@ -182,38 +200,48 @@ def onKeyPress(velocity, grid, tiles):
 
                     didMove = True
                     movedOnce = True
-        if didMove == False: loop = False
-                
+        if not didMove: loop = False
+
     ##--##
 
-    
+
 
 
 
     if movedOnce:
         newTile,grid = spawnTile(grid)
         t.append(newTile)
-    
 
-    if movedOnce and len(t) == 16:
-        x,y = tile.pos
-        val = tile.value
 
+    if len(t) == 16:
         arePossibleMoves = False
-        for x1 in range(0,2):
-            for y1 in range(0,2):
-                y1 -= 1
-                x1 -= 1
-                nextVal = grid[y+y1][x+x1]
-                if nextVal == val: arePossibleMoves = True
+        for tile in t:
+            x,y = tile.pos
+            val = tile.value
+            for i in [-1,1]:
+                x1 = x+i
+                try:
+                    if grid[y][x1] == val:
+                        if x1 >= 0:
+                            arePossibleMoves = True
+                            print((x,y),(x1,y),grid[y][x1])
+                except IndexError: pass
+            for i in [-1,1]:
+                y1 = y+i
+                try:
+                    if grid[y1][x] == val:
+                        if y1 >= 0:
+                            arePossibleMoves = True
+                            print((x,y),(x,y1),grid[y1][x])
+                except IndexError: pass
 
-
-        if arePossibleMoves == False:
+        if not arePossibleMoves:
             global mode
             mode = 'lose'
-        
+
 
     return grid, t
+
 
 size = (900,800)
 
@@ -239,7 +267,8 @@ movement = (0,0)
 enableInput = True
 keySpam = False
 mode = 'game'
-
+fadeIn = [True, 0]
+score = [0,0]
 
 
 
@@ -260,7 +289,7 @@ while True:
         pygame.draw.rect(screen,(125,125,125),border)
         border_width = 15
         pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
-        
+
         for i in range(3):
             start = border.left + border_width/2
             step = border.width/4 - border_width/4
@@ -268,21 +297,21 @@ while True:
             start = int(start)
             end = (start,border.bottom-5)
             start = (start,border.top+5)
-            
+
             pygame.draw.line(screen,(125,125,125),start,end,border_width)
 
             s,d = start
             x,c = end
             start = (d,s)
-            end = (c,x) 
+            end = (c,x)
             pygame.draw.line(screen,(125,125,125),start,end,border_width)
-            
+
 
         ##DrawTiles
         for tile in tiles:
             tile.draw()
         ##--##
-            
+
 
         ##keyCheck
 
@@ -292,21 +321,84 @@ while True:
         elif 'up' in keys or 'w' in keys: movement = (0,-1)
         elif 'down' in keys or 's' in keys: movement = (0,1)
 
-        if len(keys) > 0 and keySpam and enableInput:
+        if keys and keySpam and enableInput:
             keySpam = False
             grid, tiles = onKeyPress(movement, grid, tiles)
             print(grid, movement, len(tiles))
-        elif len(keys) == 0:
+        elif not keys:
             keySpam = True
         ##--##
 
 
     if mode == 'lose':
-        enableInput = False
-        mode = 'game'
+        pygame.draw.rect(screen,(125,125,125),border)
+        border_width = 15
+        pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
+
+        for i in range(3):
+            start = border.left + border_width/2
+            step = border.width/4 - border_width/4
+            start = start + (step*(1+i))
+            start = int(start)
+            end = (start,border.bottom-5)
+            start = (start,border.top+5)
+
+            pygame.draw.line(screen,(125,125,125),start,end,border_width)
+
+            s,d = start
+            x,c = end
+            start = (d,s)
+            end = (c,x)
+            pygame.draw.line(screen,(125,125,125),start,end,border_width)
+
+        ##DrawTiles
+        for tile in tiles:
+            tile.draw()
+
+        if fadeIn[0]:
+            score[1] = 0
+            for tile in tiles:
+                score[1] += tile.value
+
+            score[0] += score[1]*(5/220)
+
+            chng = 5
+            fadeIn[1] = fadeIn[1] + 5
+
+            if fadeIn[1] == 220:
+                fadeIn[0] = False
+
+        grey = pygame.Surface((size[0],size[1]))
+        grey.fill((125,125,125))
+
+        font = pygame.font.SysFont('', 155)
+
+        title = font.render('Game Over', True, (255,255,255))
+        grey.blit(title, (size[0]/2 - title.get_width()/2 ,60))
+
+        font = pygame.font.SysFont('', 135)
+
+        scoreText = font.render('Score: ' + str(int(score[0])), True, (255,255,255))
+        grey.blit(scoreText, (size[0]/2 - scoreText.get_width()/2, 210))
+
+        resetB = extras.word('Play Again',['center',360],reset,[],'',(255,255,255),(200,200,200),135)
+
+
+        if fadeIn[0]:
+            resetB.render(grey)
+
+        resetB.isHovered(mouse)
+
+        grey.set_alpha(fadeIn[1])
+        screen.blit(grey, (0,0))
+
+        if not fadeIn[0]:
+            resetB.render(screen)
+            screen.blit(scoreText, (size[0]/2 - scoreText.get_width()/2, 210))
+            screen.blit(title, (size[0]/2 - title.get_width()/2 ,60))
+
+            score[0] = score[1]
 
     pygame.display.flip()
     screen.fill((255,255,255))
-
-
     
