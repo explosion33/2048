@@ -20,6 +20,23 @@ class tileObj:
         self.color = color
         self.pos = pos
         self.check()
+        self.justSpawned = False
+        self.justMerged = False
+        self.mergeAnim = 11
+        self.lastPosition = self.pos
+        self.size = None
+        self.alpha = 255
+        self.posOffset = (0,0)
+
+    def pop(self, tile):
+        "Pops up the tile for the purpous of merging"
+        print('pop')
+        x,y = self.size
+        x += 40
+        y += 40
+        tile = pygame.transform.smoothscale(tile, (x,y))
+        self.posOffset = (-20,-20)
+        return tile
 
     def check(self):
         "Checks to make sure all class requirements are met"
@@ -46,6 +63,7 @@ class tileObj:
     def genTile(self):
         "The Code to generate a tile"
         tile = pygame.Surface((132, 132))
+        self.size = (132,132)
         return tile
     def addNum(self, tile, size):
         "The code to add the number to the blank tile"
@@ -83,7 +101,7 @@ class tileObj:
             size = 80
         else:
             c = (255,223,0)
-            size = 80
+            size = 75
         if v > 10000: size = 60
 
         return c,size
@@ -98,8 +116,11 @@ class tileObj:
         offset = 165
         x = 146.25*self.pos[0]
         y = 146.25*self.pos[1]
-        pos = (x+offset, y+offset)
-
+        tile.set_alpha(self.alpha)
+        if self.justMerged:
+            tile = self.pop(tile)
+            self.posOffset = (-20,-20)
+        pos = (x+offset+self.posOffset[0], y+offset+self.posOffset[1])
         screen.blit(tile, pos)
 
 
@@ -118,6 +139,7 @@ def spawnTile(grid):
             break
 
     x = tileObj(num, (0, 125, 125), (x, y))
+    x.justSpawned = True
     return x, grd
 
 
@@ -226,6 +248,7 @@ def onKeyPress(velocity, grid, tiles):
 
                     t.remove(check[1])
                     mergedTiles.append(tile)
+                    tile.justMerged = True
 
                     didMove = True
                     movedOnce = True
@@ -338,6 +361,21 @@ while True:
 
         ##DrawTiles
         for tile in tiles:
+            if tile.justSpawned:
+                tile.alpha = 30
+                tile.justSpawned = False
+            elif tile.alpha < 255:
+                tile.alpha += 5
+
+            if tile.justMerged and tile.mergeAnim == 11:
+                tile.mergeAnim = 0
+            elif tile.mergeAnim < 7:
+                tile.mergeAnim += 1
+            elif tile.mergeAnim == 7:
+                tile.mergeAnim = 11
+                tile.justMerged = False
+                tile.posOffset = (0,0)
+
             tile.draw()
         ##--##
 
@@ -357,6 +395,8 @@ while True:
         elif not keys:
             keySpam = True
         ##--##
+
+
 
     if mode == 'lose':
         pygame.draw.rect(screen,(125,125,125),border)
