@@ -1,6 +1,7 @@
 "Main Code for 2048 game"
 
 import sys
+import ctypes
 from random import randint
 import pygame
 #from pygame import gfxdraw
@@ -168,7 +169,7 @@ def sortTiles(tiles, move):
             t.append(close)
             tiles.remove(close)
         return t
-    return t
+    return tiles
 
 def reset():
     "Resets game variables for purpous of the retry button"
@@ -295,10 +296,15 @@ def onKeyPress(velocity, grid, tiles):
     return grid, t
 
 
-size = (900,800)
+
+ctypes.windll.user32.SetProcessDPIAware()
 
 pygame.init()
+
+size = (900,900)
+
 screen = pygame.display.set_mode(size)
+pygame.display.set_caption('2048')
 extras.init(screen, size)
 screen.fill((255,255,255))
 pygame.display.flip()
@@ -335,6 +341,9 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
+        if event.type == pygame.FULLSCREEN:
+            pygame.display.toggle_fullscreen()
+
 
     if mode == 'game':
         ##GRID
@@ -396,6 +405,9 @@ while True:
             keySpam = True
         ##--##
 
+        font = pygame.font.SysFont('', 40)
+        credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
+        screen.blit(credit, (20,size[1]-40))
 
 
     if mode == 'lose':
