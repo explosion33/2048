@@ -8,6 +8,7 @@ import pygame
 import extras
 
 
+
 class tileObj:
     """
     num: Tile Number
@@ -33,10 +34,13 @@ class tileObj:
         "Pops up the tile for the purpous of merging"
         print('pop')
         x,y = self.size
-        x += 40
-        y += 40
-        tile = pygame.transform.smoothscale(tile, (x,y))
-        self.posOffset = (-20,-20)
+        x += 40*(self.mergeAnim/7)
+        y += 40*(self.mergeAnim/7)
+        print(x,y, (-((x-132)/2),-((y-132)/2)), self.mergeAnim)
+        x = int(x)
+        y = int(y)
+        tile = pygame.transform.scale(tile, (x,y))
+        self.posOffset = (-((x-132)/2),-((y-132)/2))
         return tile
 
     def check(self):
@@ -120,7 +124,6 @@ class tileObj:
         tile.set_alpha(self.alpha)
         if self.justMerged:
             tile = self.pop(tile)
-            self.posOffset = (-20,-20)
         pos = (x+offset+self.posOffset[0], y+offset+self.posOffset[1])
         screen.blit(tile, pos)
 
@@ -327,12 +330,30 @@ mode = 'game'
 fadeIn = [True, 0]
 score = [0,0]
 canWin = True
-
+settings = False
+recent_click = True
 
 print(grid)
 
+settingsPanel = pygame.Surface((500,500))
+settingsPanel.fill((220,220,220))
+font = pygame.font.SysFont('', 65)
+title = font.render('Settings', True, (90,90,90))
+x = settingsPanel.get_width()/2 - title.get_rect().size[0]/2
+settingsPanel.blit(title,(x,20))
+settingsBorder = settingsPanel.get_rect()
 
 
+def rotate(image, rect, angle):
+    """Rotate the image while keeping its center."""
+    # Rotate the original image without modifying it.
+    new_image = pygame.transform.rotate(image, angle)
+    # Get a new rect with the center of the old rect.
+    rect = new_image.get_rect(center=rect.center)
+    return new_image, rect
+
+
+gearRot = 0
 while True:
     xm, ym = pygame.mouse.get_pos()
     mouse.center = (xm,ym)
@@ -340,8 +361,36 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-        if event.type == pygame.FULLSCREEN:
-            pygame.display.toggle_fullscreen()
+
+
+    font = pygame.font.SysFont('', 40)
+    credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
+
+    screen.blit(credit, (20,size[1]-40))
+
+    gear = pygame.image.load('gear.png')
+    gear = pygame.transform.scale(gear, (70,70))
+    gearRect = gear.get_rect()
+
+    gear, gearRect = rotate(gear, gearRect, -gearRot)
+
+    if mouse.colliderect(gearRect):
+        if gearRot < 90:
+            gearRot += 2
+    else:
+        if gearRot > 0:
+            gearRot -= 2
+
+    if mouse.colliderect(gearRect):
+        if pygame.mouse.get_pressed()[0] == 1 and recent_click:
+            recent_click = False
+            if settings:
+                enableInput = True
+                settings = False
+            else:
+                enableInput = False
+                settings = True
+        elif pygame.mouse.get_pressed()[0] == 0: recent_click = True
 
 
     if mode == 'game':
@@ -373,7 +422,7 @@ while True:
                 tile.alpha = 30
                 tile.justSpawned = False
             elif tile.alpha < 255:
-                tile.alpha += 5
+                tile.alpha += 10
 
             if tile.justMerged and tile.mergeAnim == 11:
                 tile.mergeAnim = 0
@@ -404,13 +453,12 @@ while True:
             keySpam = True
         ##--##
 
-        font = pygame.font.SysFont('', 40)
-        credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
-
-        screen.blit(credit, (20,size[1]-40))
-
-
     if mode == 'lose':
+
+        for tile in tiles:
+            tile.justMerged = False
+            tile.justSpawned = False
+
         pygame.draw.rect(screen,(125,125,125),border)
         border_width = 15
         pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
@@ -480,6 +528,10 @@ while True:
             score[0] = score[1]
 
     if mode == 'win':
+        for tile in tiles:
+            tile.justMerged = False
+            tile.justSpawned = False
+
         pygame.draw.rect(screen,(125,125,125),border)
         border_width = 15
         pygame.draw.rect(screen,(155,155,155),pygame.Rect(border.left+border_width,border.top+border_width,border.width-(border_width*2),border.height-(border_width*2)))
@@ -550,6 +602,16 @@ while True:
             screen.blit(title, (size[0]/2 - title.get_width()/2 ,60))
 
             score[0] = score[1]
+
+    if settings:
+        x = size[0]/2 - settingsPanel.get_width()/2
+        y = size[1]/2 - settingsPanel.get_height()/2
+        pygame.draw.rect(settingsPanel, (30,30,30),settingsBorder,11)
+        screen.blit(settingsPanel, (x,y))
+
+
+    screen.blit(gear,gearRect)
+
 
     pygame.display.flip()
     screen.fill((255,255,255))
