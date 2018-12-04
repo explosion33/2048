@@ -299,8 +299,6 @@ def onKeyPress(velocity, grid, tiles):
     return grid, t
 
 
-ctypes.windll.user32.SetProcessDPIAware()
-
 pygame.init()
 
 size = (900,900)
@@ -338,10 +336,15 @@ print(grid)
 settingsPanel = pygame.Surface((500,500))
 settingsPanel.fill((220,220,220))
 font = pygame.font.SysFont('', 65)
-title = font.render('Settings', True, (90,90,90))
-x = settingsPanel.get_width()/2 - title.get_rect().size[0]/2
-settingsPanel.blit(title,(x,20))
 settingsBorder = settingsPanel.get_rect()
+
+f = open('settings.txt', 'r')
+lines = f.readlines()
+f.close()
+
+scale = int(lines[0])
+ctypes.windll.shcore.SetProcessDpiAwareness(scale)
+
 
 
 def rotate(image, rect, angle):
@@ -604,10 +607,45 @@ while True:
             score[0] = score[1]
 
     if settings:
+        pygame.draw.rect(settingsPanel, (30,30,30),settingsBorder,11)
+
+        font = pygame.font.SysFont('', 65)
+
+        title = font.render('Settings', True, (90,90,90))
+        x = settingsPanel.get_width()/2 - title.get_rect().size[0]/2
+        settingsPanel.blit(title,(x,20))
+
         x = size[0]/2 - settingsPanel.get_width()/2
         y = size[1]/2 - settingsPanel.get_height()/2
-        pygame.draw.rect(settingsPanel, (30,30,30),settingsBorder,11)
+
+        settScale = font.render('Auto_dpi: ' + str(scale), True, (90,90,90))
+        settingsPanel.blit(settScale, (10, 100))
+        x1,y1 = settScale.get_rect().left, settScale.get_rect().top
+
+
+        if settScale.get_rect(left=x +10,top = y+100).colliderect(mouse):
+            print('')
+            if pygame.mouse.get_pressed()[0] == 1 and recent_click:
+                recent_click = False
+                if scale < 2:
+                    scale += 1
+                else:
+                    scale = 0
+            elif pygame.mouse.get_pressed()[0] == 0: recent_click = True
+
+        font = pygame.font.SysFont('', 30)
+        warning = font.render('*Reset may be required for some settings', True, (90,90,90))
+
+        settingsPanel.blit(warning, (10,settingsPanel.get_height()-25))
+
         screen.blit(settingsPanel, (x,y))
+        settingsPanel.fill((220,220,220))
+
+        f = open('settings.txt', 'w+')
+        f.writelines([str(scale)])
+        f.close()
+
+        
 
 
     screen.blit(gear,gearRect)
