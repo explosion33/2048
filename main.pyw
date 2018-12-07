@@ -1,14 +1,16 @@
 "Main Code for 2048 game"
 
+import os
 import sys
 import ctypes
 from random import randint
 import pygame
 #from pygame import gfxdraw
 import extras
-import os
+
 
 def find_data_file(filename):
+    "Finds files for use in a built exe"
     if getattr(sys, 'frozen', False):
         # The application is frozen
         datadir = os.path.dirname(sys.executable)
@@ -46,7 +48,7 @@ class tileObj:
             [(230, 230, 230), (203, 203, 203), (255, 204, 102), (255, 170, 0), (255, 112, 77), (179, 36, 0), (255, 255, 153), (255, 255, 51), (230, 230, 0), (255,223,0), (255,223,0)],
             [(230, 242, 255), (179, 215, 255), (153, 255, 204), (0, 230, 184), (0, 179, 143), (0, 153, 122), (0, 230, 230), (51, 102, 204), (36, 71, 143), (255, 102, 255), (230, 0, 230)],
             ]
-            
+
         self.colorset = tileColor
 
     def pop(self, tile):
@@ -484,6 +486,8 @@ while True:
         elif 'left' in keys or 'a' in keys: movement = (-1,0)
         elif 'up' in keys or 'w' in keys: movement = (0,-1)
         elif 'down' in keys or 's' in keys: movement = (0,1)
+        else: keySpam = False
+        print(keys)
 
         if keys and keySpam and enableInput:
             keySpam = False
@@ -705,5 +709,4 @@ while True:
 
     pygame.display.flip()
     screen.fill((255,255,255))
-
     
