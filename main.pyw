@@ -9,6 +9,7 @@ import extras
 
 
 
+
 class tileObj:
     """
     num: Tile Number
@@ -17,11 +18,12 @@ class tileObj:
 
     pos: (0-3,0-3) TL=(0,0)
     """
-    def __init__(self, num, color, pos):
+    def __init__(self, num, color, pos, tileColor):
         self.value = num
         self.color = color
         self.pos = pos
         self.check()
+        self.rect = None
         self.justSpawned = False
         self.justMerged = False
         self.mergeAnim = 11
@@ -29,14 +31,20 @@ class tileObj:
         self.size = None
         self.alpha = 255
         self.posOffset = (0,0)
+        self.colorsets = [
+            [(230, 230, 230), (203, 203, 203), (255, 204, 102), (255, 170, 0), (255, 112, 77), (179, 36, 0), (255, 255, 153), (255, 255, 51), (230, 230, 0), (255,223,0), (255,223,0)],
+            [(230, 242, 255), (179, 215, 255), (153, 255, 204), (0, 230, 184), (0, 179, 143), (0, 153, 122), (0, 230, 230), (51, 102, 204), (36, 71, 143), (255, 102, 255), (230, 0, 230)],
+            ]
+            
+        self.colorset = tileColor
 
     def pop(self, tile):
         "Pops up the tile for the purpous of merging"
-        print('pop')
+
         x,y = self.size
         x += 40*(self.mergeAnim/7)
         y += 40*(self.mergeAnim/7)
-        print(x,y, (-((x-132)/2),-((y-132)/2)), self.mergeAnim)
+
         x = int(x)
         y = int(y)
         tile = pygame.transform.scale(tile, (x,y))
@@ -84,28 +92,28 @@ class tileObj:
     def pickColor(self):
         "Defines preset colors for values"
         v = self.value
+        colorSet = self.colorsets[self.colorset]
         size = 145
-
-        if v == 2: c = (230, 230, 230)
-        elif v == 4: c = (203, 203, 203)
-        elif v == 8: c = (255, 204, 102)
-        elif v == 16: c = (255, 170, 0)
-        elif v == 32: c = (255, 112, 77)
-        elif v == 64: c = (179, 36, 0)
+        if v == 2: c = colorSet[0]
+        elif v == 4: c = colorSet[1]
+        elif v == 8: c = colorSet[2]
+        elif v == 16: c = colorSet[3]
+        elif v == 32: c = colorSet[4]
+        elif v == 64: c = colorSet[5]
         elif v == 128:
-            c = (255, 255, 153)
+            c = colorSet[6]
             size = 100
         elif v == 256:
-            c = (255, 255, 51)
+            c = colorSet[7]
             size = 90
         elif v == 512:
-            c = (230, 230, 0)
+            c = colorSet[8]
             size = 90
         elif v == 1024:
-            c = (255,223,0)
+            c = colorSet[9]
             size = 80
         else:
-            c = (255,223,0)
+            c = colorSet[10]
             size = 75
         if v > 10000: size = 60
 
@@ -117,6 +125,7 @@ class tileObj:
         c,size = self.pickColor()
         tile.fill(c)
         tile = self.addNum(tile,size)
+        self.rect = tile.get_rect()
 
         offset = 165
         x = 146.25*self.pos[0]
@@ -128,7 +137,7 @@ class tileObj:
         screen.blit(tile, pos)
 
 
-def spawnTile(grid):
+def spawnTile(grid, tileColor):
     "Randomly spawns tiles on the board"
     num = randint(1, 2)
     num = num*2
@@ -142,7 +151,7 @@ def spawnTile(grid):
             grd[y][x] = num
             break
 
-    x = tileObj(num, (0, 125, 125), (x, y))
+    x = tileObj(num, (0, 125, 125), (x, y), tileColor)
     x.justSpawned = True
     return x, grd
 
@@ -184,12 +193,13 @@ def reset():
     global mode
     global fadeIn
     global score
+    global tileColor
 
     tiles = []
     grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-    x, grid = spawnTile(grid)
-    y, grid = spawnTile(grid)
+    x, grid = spawnTile(grid, tileColor)
+    y, grid = spawnTile(grid, tileColor)
 
     tiles = [x,y]
     movement = (0,0)
@@ -261,7 +271,7 @@ def onKeyPress(velocity, grid, tiles):
     ##--##
 
     if movedOnce:
-        newTile,grid = spawnTile(grid)
+        newTile,grid = spawnTile(grid, tileColor)
         t.append(newTile)
 
 
@@ -276,7 +286,7 @@ def onKeyPress(velocity, grid, tiles):
                     if grid[y][x1] == val:
                         if x1 >= 0:
                             arePossibleMoves = True
-                            print((x,y),(x1,y),grid[y][x1])
+
                 except IndexError: pass
             for i in [-1,1]:
                 y1 = y+i
@@ -284,7 +294,7 @@ def onKeyPress(velocity, grid, tiles):
                     if grid[y1][x] == val:
                         if y1 >= 0:
                             arePossibleMoves = True
-                            print((x,y),(x,y1),grid[y1][x])
+
                 except IndexError: pass
 
         if not arePossibleMoves:
@@ -315,9 +325,15 @@ border = pygame.Rect(150,150,600,600)
 
 grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-x, grid = spawnTile(grid)
+f = open('settings.txt', 'r')
+lines = f.readlines()
+f.close()
+
+tileColor = int(lines[1])
+
+x, grid = spawnTile(grid, tileColor)
 tiles = [x]
-y, grid = spawnTile(grid)
+y, grid = spawnTile(grid, tileColor)
 
 tiles = [x,y]
 movement = (0,0)
@@ -331,16 +347,15 @@ canWin = True
 settings = False
 recent_click = True
 
-print(grid)
+
 
 settingsPanel = pygame.Surface((500,500))
 settingsPanel.fill((220,220,220))
 font = pygame.font.SysFont('', 65)
 settingsBorder = settingsPanel.get_rect()
 
-f = open('settings.txt', 'r')
-lines = f.readlines()
-f.close()
+
+
 
 scale = int(lines[0])
 ctypes.windll.shcore.SetProcessDpiAwareness(scale)
@@ -356,8 +371,28 @@ def rotate(image, rect, angle):
     return new_image, rect
 
 
+font = pygame.font.SysFont('', 40)
+credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
+
+gearC = pygame.image.load('gear.png')
+gearC = pygame.transform.scale(gearC, (70,70))
+gearRect = gearC.get_rect()
+
+grey = pygame.Surface((size[0],size[1]))
+font = pygame.font.SysFont('', 155)
+
+Overtitle = font.render('Game Over', True, (255,255,255))
+
+
+resetB = extras.word('Play Again',['center',360],reset,[],'',(255,255,255),(200,200,200),135)
+
+gold = pygame.Surface((size[0],size[1]))
+
 gearRot = 0
+
+cl = pygame.time.Clock()
 while True:
+
     xm, ym = pygame.mouse.get_pos()
     mouse.center = (xm,ym)
 
@@ -365,17 +400,8 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
 
-
-    font = pygame.font.SysFont('', 40)
-    credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
-
     screen.blit(credit, (20,size[1]-40))
-
-    gear = pygame.image.load('gear.png')
-    gear = pygame.transform.scale(gear, (70,70))
-    gearRect = gear.get_rect()
-
-    gear, gearRect = rotate(gear, gearRect, -gearRot)
+    gear, gearRect = rotate(gearC, gearRect, -gearRot)
 
     if mouse.colliderect(gearRect):
         if gearRot < 90:
@@ -384,7 +410,7 @@ while True:
         if gearRot > 0:
             gearRot -= 2
 
-    if mouse.colliderect(gearRect):
+    if mouse.colliderect(gearRect) and mode == 'game':
         if pygame.mouse.get_pressed()[0] == 1 and recent_click:
             recent_click = False
             if settings:
@@ -451,9 +477,10 @@ while True:
         if keys and keySpam and enableInput:
             keySpam = False
             grid, tiles = onKeyPress(movement, grid, tiles)
-            print(grid, movement, len(tiles))
+
         elif not keys:
             keySpam = True
+            movement = (0,0)
         ##--##
 
     if mode == 'lose':
@@ -499,20 +526,19 @@ while True:
             if fadeIn[1] == 220:
                 fadeIn[0] = False
 
-        grey = pygame.Surface((size[0],size[1]))
+
         grey.fill((125,125,125))
 
-        font = pygame.font.SysFont('', 155)
 
-        title = font.render('Game Over', True, (255,255,255))
-        grey.blit(title, (size[0]/2 - title.get_width()/2 ,60))
+        grey.blit(Overtitle, (size[0]/2 - Overtitle.get_width()/2 ,60))
 
         font = pygame.font.SysFont('', 135)
 
         scoreText = font.render('Score: ' + str(int(score[0])), True, (255,255,255))
+
         grey.blit(scoreText, (size[0]/2 - scoreText.get_width()/2, 210))
 
-        resetB = extras.word('Play Again',['center',360],reset,[],'',(255,255,255),(200,200,200),135)
+
 
 
         if fadeIn[0]:
@@ -526,7 +552,7 @@ while True:
         if not fadeIn[0]:
             resetB.render(screen)
             screen.blit(scoreText, (size[0]/2 - scoreText.get_width()/2, 210))
-            screen.blit(title, (size[0]/2 - title.get_width()/2 ,60))
+            screen.blit(Overtitle, (size[0]/2 - Overtitle.get_width()/2 ,60))
 
             score[0] = score[1]
 
@@ -572,11 +598,10 @@ while True:
             if fadeIn[1] == 220:
                 fadeIn[0] = False
 
-        gold = pygame.Surface((size[0],size[1]))
+
         gold.fill((255,215,0))
 
         font = pygame.font.SysFont('', 155)
-
         title = font.render('2048', True, (255,255,255))
         gold.blit(title, (size[0]/2 - title.get_width()/2 ,60))
 
@@ -618,13 +643,17 @@ while True:
         x = size[0]/2 - settingsPanel.get_width()/2
         y = size[1]/2 - settingsPanel.get_height()/2
 
-        settScale = font.render('Auto_dpi: ' + str(scale), True, (90,90,90))
+        settScale = font.render('Auto dpi: ' + str(scale), True, (90,90,90))
         settingsPanel.blit(settScale, (10, 100))
         x1,y1 = settScale.get_rect().left, settScale.get_rect().top
 
+        settColor = font.render('color set: ' + str(tileColor), True, (90,90,90))
+        settingsPanel.blit(settColor, (10, 200))
+        x1,y1 = settColor.get_rect().left, settColor.get_rect().top
+
 
         if settScale.get_rect(left=x +10,top = y+100).colliderect(mouse):
-            print('')
+
             if pygame.mouse.get_pressed()[0] == 1 and recent_click:
                 recent_click = False
                 if scale < 2:
@@ -632,6 +661,18 @@ while True:
                 else:
                     scale = 0
             elif pygame.mouse.get_pressed()[0] == 0: recent_click = True
+
+        if settColor.get_rect(left=x +10,top = y+200).colliderect(mouse):
+
+            if pygame.mouse.get_pressed()[0] == 1 and recent_click:
+                recent_click = False
+
+                if tileColor < 1:
+                    tileColor += 1
+                else:
+                    tileColor = 0
+            elif pygame.mouse.get_pressed()[0] == 0: recent_click = True
+
 
         font = pygame.font.SysFont('', 30)
         warning = font.render('*Reset may be required for some settings', True, (90,90,90))
@@ -642,15 +683,16 @@ while True:
         settingsPanel.fill((220,220,220))
 
         f = open('settings.txt', 'w+')
-        f.writelines([str(scale)])
+        f.writelines([str(scale), '\n' + str(tileColor)])
         f.close()
 
-        
+        for tile in tiles:
+            tile.colorset = tileColor
 
-
-    screen.blit(gear,gearRect)
-
+    if mode == 'game':
+        screen.blit(gear,gearRect)
 
     pygame.display.flip()
     screen.fill((255,255,255))
+
     
