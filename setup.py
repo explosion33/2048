@@ -37,7 +37,7 @@ setup(
     options={
         "build_exe": {
             "packages":["pygame", "sys", "random", "os", "ctypes"],
-            "include_files":["scores.txt", "icon.ico"]
+            "include_files":["settings.txt", "icon.ico", 'gear.png']
             }},
     executables = executables,
     version = "1.0"

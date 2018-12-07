@@ -6,7 +6,18 @@ from random import randint
 import pygame
 #from pygame import gfxdraw
 import extras
+import os
 
+def find_data_file(filename):
+    if getattr(sys, 'frozen', False):
+        # The application is frozen
+        datadir = os.path.dirname(sys.executable)
+    else:
+        # The application is not frozen
+        # Change this bit to match where you store your data files:
+        datadir = os.path.dirname(__file__)
+
+    return os.path.join(datadir, filename)
 
 
 
@@ -325,7 +336,7 @@ border = pygame.Rect(150,150,600,600)
 
 grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-f = open('settings.txt', 'r')
+f = open(find_data_file('settings.txt'), 'r')
 lines = f.readlines()
 f.close()
 
@@ -374,7 +385,7 @@ def rotate(image, rect, angle):
 font = pygame.font.SysFont('', 40)
 credit = font.render('Created by Ethan Armstrong', True, (0,0,0))
 
-gearC = pygame.image.load('gear.png')
+gearC = pygame.image.load(find_data_file('gear.png'))
 gearC = pygame.transform.scale(gearC, (70,70))
 gearRect = gearC.get_rect()
 
@@ -682,7 +693,7 @@ while True:
         screen.blit(settingsPanel, (x,y))
         settingsPanel.fill((220,220,220))
 
-        f = open('settings.txt', 'w+')
+        f = open(find_data_file('settings.txt'), 'w+')
         f.writelines([str(scale), '\n' + str(tileColor)])
         f.close()
 
