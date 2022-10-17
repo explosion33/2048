@@ -1,8 +1,13 @@
-#2048
-A recreation of the popular game 2048 in python 
+# 2048
+A recreation of the game 2048 using Python and Pygame
 
-to run the program in python do: python main.pyw
-the game files are in the build folder
-the installer is in the dist folder
+## Playing the game
+```python3 main.pyw```
 
-to create a new build do: python setup.py
+or 
+
+executing `main.exe` in the `build` folder
+
+or
+
+installing via `2048-1.0-amd64.msi` in `dist`
